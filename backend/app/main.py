@@ -155,6 +155,7 @@ def analyze_data(data: bytes, filename: str, settings: Settings, session: str):
         analysis_gate.release()
 
 
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": "1.0.0"}
