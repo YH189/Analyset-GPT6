@@ -7,6 +7,7 @@
   NODE_VERSION = "22"
   VITE_PUBLIC_DEMO = "true"
   VITE_MAX_UPLOAD_MB = "10"
+  VITE_API_BASE_URL = "https://analyset-api.onrender.com"
 
 [[redirects]]
   from = "/*"
