@@ -213,3 +213,23 @@ def test_packaged_samples_match_downloadable_examples():
     root = Path(__file__).resolve().parents[2]
     for source in (root / "sample-data").glob("*.csv"):
         assert (root / "backend/app/sample_data" / source.name).read_bytes() == source.read_bytes()
+
+
+def test_demo_guard_rate_limit():
+    from fastapi import FastAPI
+
+    from app.limits import DemoGuardMiddleware
+
+    demo = FastAPI()
+    demo.add_middleware(DemoGuardMiddleware, requests_per_minute=1)
+
+    @demo.post("/test")
+    def ok():
+        return {"ok": True}
+
+    with TestClient(demo) as client:
+        assert client.post("/test").status_code == 200
+        response = client.post("/test")
+        assert response.status_code == 429
+        assert response.headers["retry-after"] == "60"
+        assert response.json()["error"]["code"] == "DEMO_BUSY"

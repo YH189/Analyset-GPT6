@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { UploadCloud, X, FileSpreadsheet } from "lucide-react";
+const uploadLimit = Number(import.meta.env.VITE_MAX_UPLOAD_MB || 100);
+
 export function Upload({
   file,
   onFile,
@@ -20,8 +22,8 @@ export function Upload({
       setError("Choose a .csv file.");
       return;
     }
-    if (next.size > 100 * 1024 * 1024) {
-      setError("The file exceeds 100 MB.");
+    if (next.size > uploadLimit * 1024 * 1024) {
+      setError(`The file exceeds ${uploadLimit} MB.`);
       return;
     }
     if (!next.size) {
@@ -72,7 +74,7 @@ export function Upload({
         <small>
           {file
             ? `${(file.size / 1024).toFixed(1)} KB · Ready to analyze`
-            : "Supports CSV files up to 100 MB."}
+            : `Supports CSV files up to ${uploadLimit} MB.`}
         </small>
       </button>
       {file && (

@@ -21,13 +21,16 @@ from starlette.exceptions import HTTPException
 
 from .analysis import profile
 from .drift import compare
-from .limits import BodyLimitMiddleware
+from .limits import BodyLimitMiddleware, DemoGuardMiddleware
 from .models import Analysis, CompareRequest, Comparison, Settings
 from .parsing import MAX_BYTES, DataError, parse_csv, safe_name
 from .reports import pdf_report
 
 app = FastAPI(title="AnalySet", version="1.0.0")
 app.add_middleware(BodyLimitMiddleware)
+app.add_middleware(
+    DemoGuardMiddleware, requests_per_minute=int(os.getenv("DEMO_REQUESTS_PER_MINUTE", "0"))
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(
@@ -42,7 +45,7 @@ analysis_gate = threading.Semaphore(1)
 MAX_REPORTS = int(os.getenv("MAX_REPORTS", "20"))
 TTL = int(os.getenv("REPORT_TTL_SECONDS", "3600"))
 # Aggregate memory cap in addition to count/TTL limits. Frames are retained for comparison.
-MAX_MEMORY = 512 * 1024 * 1024
+MAX_MEMORY = int(os.getenv("MAX_MEMORY_MB", "512")) * 1024 * 1024
 Session = Annotated[str, Header(alias="X-Session-ID", min_length=20, max_length=100)]
 
 
@@ -126,13 +129,13 @@ def analyze_data(data: bytes, filename: str, settings: Settings, session: str):
         raise DataError("SERVER_BUSY", "Another analysis is running. Try again shortly.", 429)
     try:
         frame = parse_csv(data, filename)
-        report = profile(frame, safe_name(filename), len(data), settings)
-        if report.memory_usage > MAX_MEMORY:
+        if int(frame.memory_usage(deep=True).sum()) > MAX_MEMORY:
             raise DataError(
                 "ANALYSIS_LIMIT",
                 "This dataset exceeds the in-memory analysis budget. Use a smaller dataset.",
                 413,
             )
+        report = profile(frame, safe_name(filename), len(data), settings)
         with lock:
             clean_store()
             while store and (
