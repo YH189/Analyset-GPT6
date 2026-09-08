@@ -289,6 +289,12 @@ export default function App() {
           <span className="session-label">Local session</span>
         </header>
         <div className="workspace-content">
+          {import.meta.env.VITE_PUBLIC_DEMO === "true" && (
+            <p className="status-line" role="note">
+              Public demo · Do not upload sensitive or personal data. Reports
+              expire and are not permanently stored.
+            </p>
+          )}
           <div className="page-heading">
             <div>
               <span className="eyebrow">DATA WORKSPACE</span>

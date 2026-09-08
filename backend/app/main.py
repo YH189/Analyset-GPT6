@@ -185,7 +185,7 @@ async def analyze(session: Session, file: UploadFile = File(...), settings: str 
 def sample(name: str, session: Session):
     if name not in {"clean", "problematic", "baseline", "drifted"}:
         raise DataError("SAMPLE_NOT_FOUND", "Choose an available sample dataset.", 404)
-    path = Path(__file__).resolve().parents[2] / "sample-data" / f"customers_{name}.csv"
+    path = Path(__file__).resolve().parent / "sample_data" / f"customers_{name}.csv"
     return analyze_data(path.read_bytes(), path.name, Settings(), session)
 
 

@@ -206,3 +206,10 @@ def test_streaming_request_limit(monkeypatch):
     with pytest.raises(HTTPException) as exc:
         asyncio.run(limits.BodyLimitMiddleware(downstream)({"type": "http"}, receive, None))
     assert exc.value.status_code == 413
+
+
+def test_packaged_samples_match_downloadable_examples():
+    """Render's backend root excludes top-level files; keep runtime samples local."""
+    root = Path(__file__).resolve().parents[2]
+    for source in (root / "sample-data").glob("*.csv"):
+        assert (root / "backend/app/sample_data" / source.name).read_bytes() == source.read_bytes()
