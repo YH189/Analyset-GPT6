@@ -922,3 +922,11 @@ hr {
     animation: none !important;
   }
 }
+
+.skip-link {
+  top: 8px;
+  transform: translateY(-160%);
+}
+.skip-link:focus {
+  transform: translateY(0);
+}

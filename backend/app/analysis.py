@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from .models import Analysis, Issue, Settings
+from .parsing import DataError
 
 MISSING = {"", "na", "n/a", "null", "none", "nan"}
 SCHEMA_TYPES = {"All-null column", "Mixed datatype", "Invalid date", "Infinite values"}
@@ -123,6 +124,11 @@ def profile(frame: pd.DataFrame, filename: str, size: int, settings: Settings) -
                 "Review division by zero and source transformations.",
             )
             finite = numeric.where(np.isfinite(numeric)).dropna()
+            if not finite.empty and finite.abs().max() > 1e150:
+                raise DataError(
+                    "NUMERIC_RANGE",
+                    "Numeric magnitudes above 1e150 exceed safe analysis limits. Rescale the data before uploading.",
+                )
             if not finite.empty:
                 q1, q3 = finite.quantile([0.25, 0.75])
                 lower = q1 - settings.iqr_multiplier * (q3 - q1)

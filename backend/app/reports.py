@@ -1,11 +1,15 @@
 """Printable reports, built from calculated analysis values only."""
 
 from io import BytesIO
+from pathlib import Path
 from xml.sax.saxutils import escape
 
+import reportlab
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .models import Analysis, Comparison
@@ -14,7 +18,29 @@ from .models import Analysis, Comparison
 def pdf_report(report: Analysis, drift: Comparison | None) -> bytes:
     output = BytesIO()
     doc = SimpleDocTemplate(output, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)
+    font_dir = Path(reportlab.__file__).parent / "fonts"
+    for label, filename in [
+        ("AnalySetSans", "Vera.ttf"),
+        ("AnalySetSans-Bold", "VeraBd.ttf"),
+        ("AnalySetSans-Italic", "VeraIt.ttf"),
+        ("AnalySetSans-BoldItalic", "VeraBI.ttf"),
+    ]:
+        if label not in pdfmetrics.getRegisteredFontNames():
+            pdfmetrics.registerFont(TTFont(label, str(font_dir / filename)))
+    pdfmetrics.registerFontFamily(
+        "AnalySetSans",
+        normal="AnalySetSans",
+        bold="AnalySetSans-Bold",
+        italic="AnalySetSans-Italic",
+        boldItalic="AnalySetSans-BoldItalic",
+    )
     styles = getSampleStyleSheet()
+    for style in styles.byName.values():
+        style.fontName = (
+            "AnalySetSans-Bold" if style.name.startswith(("Heading", "Title")) else "AnalySetSans"
+        )
+    styles["BodyText"].fontSize = 9
+    styles["BodyText"].leading = 13
     story = []
 
     def para(text, style="BodyText"):
@@ -58,7 +84,7 @@ def pdf_report(report: Analysis, drift: Comparison | None) -> bytes:
         if c["dtype"] == "numeric":
             para(
                 " / ".join(
-                    f"{key}: {c[key]}"
+                    f"{key}: {c[key]:.6g}" if c[key] is not None else f"{key}: —"
                     for key in ["min", "max", "mean", "median", "std", "q1", "q3"]
                 )
             )

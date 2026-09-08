@@ -150,3 +150,31 @@ export function MissingChart({ report }: { report: Analysis }) {
     </section>
   );
 }
+
+export function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const low = Math.min(...values),
+    spread = Math.max(...values) - low || 1;
+  const points = values
+    .map(
+      (v, i) =>
+        `${2 + (i * 96) / (values.length - 1)},${22 - ((v - low) / spread) * 20}`,
+    )
+    .join(" ");
+  return (
+    <svg
+      viewBox="0 0 100 24"
+      role="img"
+      aria-label="Session metric trend"
+      style={{ width: "100%", height: 24, marginBottom: 8 }}
+    >
+      <polyline
+        points={points}
+        fill="none"
+        stroke="#6999e5"
+        strokeWidth="1"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Upload } from "./components/Upload";
 import { Issues, Severity } from "./components/Issues";
-import { MissingChart, Trends } from "./components/Charts";
+import { MissingChart, Trends, Sparkline } from "./components/Charts";
 import {
   defaults,
   fmt,
@@ -69,6 +69,38 @@ function loadSettings(): Settings {
 export default function App() {
   const [page, setPage] = useState<Page>("Overview");
   const [drawer, setDrawer] = useState(false);
+  const [compact, setCompact] = useState(() => window.innerWidth <= 1000);
+  const sidebar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const resize = () => setCompact(window.innerWidth <= 1000);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+  useEffect(() => {
+    if (!drawer) return;
+    const elements = sidebar.current?.querySelectorAll<HTMLElement>(
+      "a, button:not(:disabled)",
+    );
+    const visible = Array.from(elements || []).filter(
+      (el) =>
+        el.getClientRects().length && getComputedStyle(el).display !== "none",
+    );
+    visible[0]?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !visible.length) return;
+      const first = visible[0],
+        last = visible[visible.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", trap);
+    return () => document.removeEventListener("keydown", trap);
+  }, [drawer]);
   const [collapsed, setCollapsed] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [report, setReport] = useState<Analysis | null>(null);
@@ -161,7 +193,11 @@ export default function App() {
           onClick={() => setDrawer(false)}
         />
       )}
-      <aside className={`sidebar ${drawer ? "open" : ""}`}>
+      <aside
+        ref={sidebar}
+        inert={compact && !drawer}
+        className={`sidebar ${drawer ? "open" : ""}`}
+      >
         <a
           href="#"
           className="brand"
@@ -214,7 +250,7 @@ export default function App() {
           </button>
         </div>
       </aside>
-      <main id="workspace">
+      <main id="workspace" tabIndex={-1} inert={compact && drawer}>
         <header className="topbar">
           <div className="breadcrumb">
             <button
@@ -409,6 +445,19 @@ export default function App() {
                               <span>{String(label)}</span>
                             </div>
                             <div className="metric-value">{String(value)}</div>
+                            {String(label) !== "Drift Status" && (
+                              <Sparkline
+                                values={reports.map((r) =>
+                                  String(label) === "Quality Score"
+                                    ? r.quality_score
+                                    : String(label) === "Missing Values"
+                                      ? r.missing_percentage
+                                      : String(label) === "Duplicates"
+                                        ? r.duplicate_percentage
+                                        : r.schema_issues,
+                                )}
+                              />
+                            )}
                             <small>{String(sub)}</small>
                           </section>
                         );

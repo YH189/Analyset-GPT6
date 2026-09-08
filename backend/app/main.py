@@ -17,14 +17,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException
 
 from .analysis import profile
 from .drift import compare
+from .limits import BodyLimitMiddleware
 from .models import Analysis, CompareRequest, Comparison, Settings
 from .parsing import MAX_BYTES, DataError, parse_csv, safe_name
 from .reports import pdf_report
 
 app = FastAPI(title="AnalySet", version="1.0.0")
+app.add_middleware(BodyLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(
@@ -41,6 +44,14 @@ TTL = int(os.getenv("REPORT_TTL_SECONDS", "3600"))
 # Aggregate memory cap in addition to count/TTL limits. Frames are retained for comparison.
 MAX_MEMORY = 512 * 1024 * 1024
 Session = Annotated[str, Header(alias="X-Session-ID", min_length=20, max_length=100)]
+
+
+@app.exception_handler(HTTPException)
+async def http_error(_request, exc):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": "HTTP_ERROR", "message": str(exc.detail)}},
+    )
 
 
 @app.exception_handler(DataError)
