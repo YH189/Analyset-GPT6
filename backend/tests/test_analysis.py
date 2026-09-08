@@ -160,3 +160,49 @@ def test_sample_and_compare_api():
     assert result.json()["overall"] == "High"
     pdf = client.post(f"/api/report/{b['id']}/export", headers=HEADERS)
     assert pdf.content.startswith(b"%PDF")
+
+
+def test_extreme_numbers_return_readable_error():
+    with pytest.raises(DataError, match="Rescale"):
+        analyze("value\n1e308\n-1e308")
+
+
+def test_upload_header_limit():
+    r = client.post("/api/datasets/analyze", headers={**HEADERS, "Content-Length": "999999999"})
+    assert r.status_code == 413
+    assert "error" in r.json()
+
+
+def test_limits_extension_width_and_settings(monkeypatch):
+    import app.parsing as parser
+
+    with pytest.raises(DataError, match=".csv"):
+        parse_csv(b"a\n1", "x.exe")
+    monkeypatch.setattr(parser, "MAX_COLUMNS", 1)
+    with pytest.raises(DataError) as exc:
+        parse_csv(b"a,b\n1,2", "x.csv")
+    assert exc.value.code == "TOO_WIDE"
+    monkeypatch.setattr(parser, "MAX_BYTES", 2)
+    with pytest.raises(DataError) as exc:
+        parse_csv(b"a\n123", "x.csv")
+    assert exc.value.status == 413
+
+
+def test_streaming_request_limit(monkeypatch):
+    import asyncio
+
+    from starlette.exceptions import HTTPException
+
+    import app.limits as limits
+
+    monkeypatch.setattr(limits, "MAX_BYTES", 1)
+
+    async def receive():
+        return {"type": "http.request", "body": b"x" * (1024 * 1024 + 2)}
+
+    async def downstream(_scope, reader, _send):
+        await reader()
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(limits.BodyLimitMiddleware(downstream)({"type": "http"}, receive, None))
+    assert exc.value.status_code == 413
