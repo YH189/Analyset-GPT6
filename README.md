@@ -12,25 +12,7 @@ The project was created specifically to test what an advanced AI system can buil
 
 ## Live Application
 
-### Frontend
-
 **https://analyset.netlify.app**
-
-### Backend API
-
-**https://analyset-api.onrender.com**
-
-### API Health
-
-**https://analyset-api.onrender.com/api/health**
-
-### Repository
-
-**https://github.com/YH189/analyset**
-
-> The Render backend may require a short wake-up period after inactivity.
-
----
 
 ## Project Status
 
