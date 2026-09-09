@@ -2,6 +2,14 @@
 
 AnalySet is an open-source dataset quality, profiling, validation, comparison and drift-analysis platform for analytics and machine-learning workflows.
 
+Live application: [analyset.netlify.app](https://analyset.netlify.app)
+
+Backend API: [analyset-api.onrender.com](https://analyset-api.onrender.com) · [Health](https://analyset-api.onrender.com/api/health)
+
+The public demo uses Netlify for the React build and Render for FastAPI. Render’s free service can take time to wake after inactivity. Use sample or non-sensitive data only; session reports expire. See [deployment configuration and limits](docs/architecture.md#live-deployment).
+
+Deployment note: the public app is working. The latest numeral typography refinement is committed but awaits deployment because the Netlify account credit limit was reached. See the [validation record](docs/validation.md#typography-change-and-deployment-blocker) for verified checks and remaining QA.
+
 ## Overview
 
 Upload a CSV, inspect calculated quality findings, compare a baseline with a current dataset, and export a printable report. Every result comes from the supplied data. The application uses deterministic statistical methods and needs no paid AI service or API key.
@@ -262,7 +270,7 @@ docs/              Architecture and validation notes
 
 Uploads are treated only as text, never executed. The parser validates extension, MIME, encoding, dimensions and byte size; filenames are sanitized. Framework-spooled uploads are closed after processing. CSV exports prefix formula-like cells to reduce spreadsheet formula injection. PDF text is escaped. Secrets and generated dependencies are excluded from Git.
 
-The default application is intended for local or trusted private use. Before exposing it publicly, add authenticated access, TLS, reverse-proxy request limits and rate limiting. Session identifiers alone are not a complete access-control system. CORS is not authentication. Use a single backend worker because the store is in memory; horizontal scaling requires a shared store and a job queue. Do not upload sensitive data to an untrusted deployment.
+The hosted public demo uses HTTPS, explicit CORS origins, bounded uploads, global request throttling and one active analysis request at a time. It has no account authentication and is intended for sample or non-sensitive datasets. Private production use requires authenticated access and infrastructure appropriate to the data. Session identifiers alone are not a complete access-control system. CORS is not authentication. Use a single backend worker because the store is in memory; horizontal scaling requires a shared store and a job queue. Do not upload sensitive data to an untrusted deployment.
 
 ## Limitations
 

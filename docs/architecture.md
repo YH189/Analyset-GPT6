@@ -16,12 +16,32 @@ Uploads are read up to the configured file cap plus one byte, validated, then cl
 
 Numeric drift samples at most 10,000 finite values per side; categorical drift uses all observed categories. Full profiling remains in-memory rather than streaming. Large reports and PDFs can be expensive. Scale-out requires a shared store, admission control and background jobs; simply increasing Uvicorn workers would break session report lookup.
 
-## Netlify and Render deployment continuation
+## Live deployment
 
-The existing Netlify project is `analyset` (`476c4d79-5a97-4341-a2a2-ab1f521fb9a5`). Root `netlify.toml` sets base `frontend`, build `npm run build`, and publish `dist`, plus the SPA fallback. Do not set publish to `frontend/dist` when the base is already `frontend`.
+- Frontend: https://analyset.netlify.app
+- Backend: https://analyset-api.onrender.com
+- Health: https://analyset-api.onrender.com/api/health
+- Source: https://github.com/YH189/analyset, branch `main`.
 
-Render must use root `backend`, Python 3.12, build `pip install -r requirements.txt`, and start `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1`. `backend/.python-version` pins the Python minor version. The deployment uses one worker to preserve report lookup.
+The existing Netlify project publishes `dist` relative to base `frontend`, after `npm run build`. Root `netlify.toml` configures the SPA fallback, security headers and public build variables. `VITE_API_BASE_URL=https://analyset-api.onrender.com` is a public API origin, not a secret. Vite embeds it at build time; changing it requires a fresh deployment. Production is public; deploy previews retain team sign-in protection.
 
-Configure Render `CORS_ORIGINS` with only the final HTTPS Netlify origin. Configure Netlify `VITE_API_BASE_URL` with the real Render HTTPS origin, without `/api`, then rebuild. Netlify also enables `VITE_PUBLIC_DEMO=true` to display the no-sensitive-data notice.
+The existing Render service `analyset-api` runs in My Workspace, Singapore, on the free plan. Its repository root is unchanged: the build command is `cd backend && pip install -r requirements.txt`; the start command is `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1`. The single worker is required for the in-memory session store. Python is pinned to 3.12.13 in the service environment.
 
-Deployment is not complete until the Render connection is authorized, both services are configured and the live analysis/comparison/export workflow is verified. No backend URL is invented or embedded in this preparation step. The public demo must not be used for sensitive data; additional production abuse controls are assessed before enabling public access.
+`CORS_ORIGINS=https://analyset.netlify.app` permits the frontend origin. Browser requests include `X-Session-ID`; CORS is not authentication. The root health response supports GET/HEAD probes; `/api/health` returns structured status.
+
+### Public demo limits
+
+| Variable | Value |
+| --- | --- |
+| `MAX_UPLOAD_MB` | 10 |
+| `MAX_COLUMNS` | 500 |
+| `MAX_ROWS` | 100000 |
+| `MAX_CELLS` | 500000 |
+| `MAX_REPORTS` | 10 globally |
+| `REPORT_TTL_SECONDS` | 3600 |
+| `MAX_MEMORY_MB` | 128 retained-frame budget |
+| `DEMO_REQUESTS_PER_MINUTE` | 60 globally |
+| `VITE_PUBLIC_DEMO` | true |
+| `VITE_MAX_UPLOAD_MB` | 10 |
+
+One POST runs at a time in demo mode; overlapping requests receive HTTP 429 with Retry-After. These limits protect a small shared demonstration service, not an authenticated production data platform. Free Render instances sleep when idle. Reports may disappear on restart, expiration or eviction. Memory limits exclude framework and intermediate processing overhead. Do not upload personal, confidential or sensitive data.
