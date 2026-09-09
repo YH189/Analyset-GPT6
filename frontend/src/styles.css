@@ -5,6 +5,9 @@
   background: #050505;
   font-synthesis: none;
   font-weight: 400;
+  font-style: normal;
+  font-stretch: normal;
+  letter-spacing: normal;
   font-variant-numeric: lining-nums tabular-nums;
   color-scheme: dark;
   font-size: 13px;
@@ -18,8 +21,11 @@ body {
 }
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
+  /* The font shorthand resets numeric variants on form controls. */
+  font-variant-numeric: inherit;
 }
 button,
 select,
@@ -207,7 +213,7 @@ nav {
   margin-left: auto;
   display: flex;
   align-items: center;
-  border: 1px solid #252525;
+  border: 1px solid #292929;
   background: #101010;
   padding: 0 10px;
   border-radius: 4px;
@@ -215,9 +221,14 @@ nav {
   min-width: 0;
   color: #888;
 }
+.search:focus-within {
+  border-color: #e5e5e5;
+}
 .search input {
   background: none;
   border: 0;
+  outline: none;
+  box-shadow: none;
   min-width: 0;
   width: 100%;
   font-size: 11px;
@@ -318,7 +329,6 @@ nav {
 .metric-value {
   font-size: 28px;
   font-weight: 400;
-  font-variant-numeric: lining-nums tabular-nums;
   letter-spacing: normal;
   margin: 24px 0 12px;
   white-space: nowrap;
@@ -592,7 +602,6 @@ details small {
   margin-top: 18px;
 }
 .stat-list p {
-  font-variant-numeric: lining-nums tabular-nums;
   margin-top: 8px;
 }
 .search-results h2 {
