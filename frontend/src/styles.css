@@ -5,6 +5,7 @@
   background: #050505;
   font-synthesis: none;
   font-weight: 400;
+  font-variant-numeric: lining-nums tabular-nums;
   color-scheme: dark;
   font-size: 13px;
 }
@@ -315,9 +316,10 @@ nav {
   color: #ccc;
 }
 .metric-value {
-  font-size: 27px;
-  font-weight: 300;
-  letter-spacing: -0.5px;
+  font-size: 28px;
+  font-weight: 400;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: normal;
   margin: 24px 0 12px;
   white-space: nowrap;
 }
@@ -590,7 +592,7 @@ details small {
   margin-top: 18px;
 }
 .stat-list p {
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: lining-nums tabular-nums;
   margin-top: 8px;
 }
 .search-results h2 {
@@ -716,6 +718,7 @@ hr {
   }
   .metric-value {
     margin: 17px 0;
+    font-size: 26px;
   }
   .drop-target {
     min-height: 89px;
@@ -851,7 +854,7 @@ hr {
     padding: 14px;
   }
   .metric-value {
-    font-size: 26px;
+    font-size: 24px;
   }
   .metric-label {
     font-size: 11px;
