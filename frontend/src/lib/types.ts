@@ -1,9 +1,13 @@
 export type Settings = {
+  duplicate_auto_exclude_ids: boolean;
+  duplicate_column_overrides: Record<string, "auto" | "include" | "exclude">;
   iqr_multiplier: number;
   drift_sensitivity: "sensitive" | "standard" | "relaxed";
   weights: Record<string, number>;
 };
 export const defaults: Settings = {
+  duplicate_auto_exclude_ids: true,
+  duplicate_column_overrides: {},
   iqr_multiplier: 1.5,
   drift_sensitivity: "standard",
   weights: {
@@ -54,6 +58,22 @@ export type Analysis = {
   column_count: number;
   missing_count: number;
   missing_percentage: number;
+  duplicate_detection?: {
+    mode: string;
+    evaluated: boolean;
+    note: string;
+    group_count: number;
+    matched_columns: string[];
+    excluded_columns: string[];
+    column_decisions: { column: string; excluded: boolean; reason: string }[];
+    groups: {
+      row_indices: number[];
+      row_numbers: number[];
+      identifiers: Record<string, string | null>[];
+      matched_columns: string[];
+      excluded_columns: string[];
+    }[];
+  };
   duplicate_count: number;
   duplicate_percentage: number;
   schema_issues: number;

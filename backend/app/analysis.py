@@ -6,6 +6,7 @@ from uuid import uuid4
 import numpy as np
 import pandas as pd
 
+from .duplicates import detect_duplicates
 from .models import Analysis, Issue, Settings
 from .parsing import DataError
 
@@ -246,14 +247,18 @@ def profile(frame: pd.DataFrame, filename: str, size: int, settings: Settings) -
                 "Verify the intended entity key before deduplicating.",
             )
         columns.append(col)
-    duplicates = frame.duplicated()
+    duplicates, duplicate_details = detect_duplicates(frame, settings)
     dup_count = int(duplicates.sum())
     issue(
         "(dataset)",
         "Duplicate row",
         "Medium",
         duplicates,
-        "Exact repeated rows after the first occurrence.",
+        "Exact repeated records after the first occurrence; matched columns: "
+        + ", ".join(duplicate_details["matched_columns"])
+        + "; excluded columns: "
+        + (", ".join(duplicate_details["excluded_columns"]) or "None")
+        + ".",
         "Confirm repeated observations are unintended before removing them.",
     )
     schema_count = sum(i.issue_type in SCHEMA_TYPES for i in issues)
@@ -273,6 +278,11 @@ def profile(frame: pd.DataFrame, filename: str, size: int, settings: Settings) -
         f"{missing_total:,} missing cells ({missing_total / (n * width):.1%}); {dup_count:,} duplicate rows.",
         f"AnalySet Quality Score: {score}/100. This is a configurable quality heuristic.",
     ]
+    summary.append(
+        "Duplicate comparison excludes: "
+        + (", ".join(duplicate_details["excluded_columns"]) or "None")
+        + ". Review matching rules in Data Quality."
+    )
     summary += [f"{i.column}: {i.description}" for i in issues[:5]]
     return Analysis(
         id=uuid4().hex,
@@ -285,6 +295,7 @@ def profile(frame: pd.DataFrame, filename: str, size: int, settings: Settings) -
         missing_count=missing_total,
         missing_percentage=round(missing_total / (n * width) * 100, 3),
         duplicate_count=dup_count,
+        duplicate_detection=duplicate_details,
         duplicate_percentage=round(dup_count / n * 100, 3),
         schema_issues=schema_count,
         quality_score=score,

@@ -2,9 +2,11 @@ import { useState } from "react";
 import { defaults, type Settings as Config } from "../lib/types";
 export default function Settings({
   settings,
+  columns = [],
   onSave,
 }: {
   settings: Config;
+  columns?: string[];
   onSave: (s: Config) => void;
 }) {
   const [draft, setDraft] = useState(settings);
@@ -58,6 +60,47 @@ export default function Settings({
           <option value="relaxed">Relaxed</option>
         </select>
       </label>
+      <h3>Duplicate comparison</h3>
+      <label className="field">
+        <span>Automatically exclude unique identifier columns</span>
+        <input
+          type="checkbox"
+          checked={draft.duplicate_auto_exclude_ids}
+          onChange={(e) =>
+            setDraft({ ...draft, duplicate_auto_exclude_ids: e.target.checked })
+          }
+        />
+      </label>
+      <p className="muted">
+        Exact equality on included columns. Unique values alone do not imply an
+        identifier. Turn off automatic exclusion for full-row matching. Save and
+        rerun your uploaded CSV to apply changes.
+      </p>
+      {Array.from(
+        new Set([...columns, ...Object.keys(draft.duplicate_column_overrides)]),
+      ).map((column) => (
+        <label className="field" key={column}>
+          {column} · duplicate matching
+          <select
+            value={draft.duplicate_column_overrides[column] || "auto"}
+            onChange={(e) => {
+              const overrides = { ...draft.duplicate_column_overrides };
+              if (e.target.value === "auto") delete overrides[column];
+              else overrides[column] = e.target.value as "include" | "exclude";
+              setDraft({ ...draft, duplicate_column_overrides: overrides });
+            }}
+          >
+            <option value="auto">Automatic</option>
+            <option value="include">Force include</option>
+            <option value="exclude">Force exclude</option>
+          </select>
+        </label>
+      ))}
+      {!columns.length && (
+        <p className="muted">
+          Analyze a dataset to configure individual column overrides.
+        </p>
+      )}
       <h3>Quality score weights</h3>
       {Object.entries(draft.weights).map(([key, value]) => (
         <label className="field" key={key}>

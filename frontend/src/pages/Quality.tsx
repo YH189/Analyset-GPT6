@@ -152,6 +152,79 @@ export default function Quality({
           </small>
         </section>
       )}
+      {report.duplicate_detection && (
+        <section className="panel">
+          <h2>Exact duplicate records</h2>
+          <p>
+            {report.duplicate_count} excess records in{" "}
+            {report.duplicate_detection.group_count} groups. Every group
+            includes its first occurrence.
+          </p>
+          <p>
+            Matched columns:{" "}
+            {report.duplicate_detection.matched_columns.join(", ") || "None"}
+          </p>
+          <p>
+            Excluded columns:{" "}
+            {report.duplicate_detection.excluded_columns.join(", ") || "None"}
+          </p>
+          {report.duplicate_detection.note && (
+            <p role="status">{report.duplicate_detection.note}</p>
+          )}
+          <details>
+            <summary>Column decisions and overrides</summary>
+            <p>
+              Change individual column matching in Settings, save, then rerun
+              your CSV.
+            </p>
+            <ul>
+              {report.duplicate_detection.column_decisions.map((d) => (
+                <li key={d.column}>
+                  {d.column}: {d.excluded ? "excluded" : "included"} —{" "}
+                  {d.reason}
+                </li>
+              ))}
+            </ul>
+          </details>
+          <details>
+            <summary>
+              Inspect {report.duplicate_detection.group_count} duplicate groups
+            </summary>
+            <p>
+              Row indices start at zero; CSV record numbers count the header as
+              record 1.
+            </p>
+            <div className="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Row indices</th>
+                    <th>CSV records</th>
+                    <th>Identifiers in row order</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.duplicate_detection.groups.map((g, i) => (
+                    <tr key={i}>
+                      <td>{g.row_indices.join(", ")}</td>
+                      <td>{g.row_numbers.join(", ")}</td>
+                      <td>
+                        {g.identifiers
+                          .map((ids) =>
+                            Object.entries(ids)
+                              .map(([k, v]) => `${k}: ${v ?? "missing"}`)
+                              .join(", "),
+                          )
+                          .join("; ") || "No identifier columns"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+      )}
       <Issues issues={report.issues} query={query} />
     </>
   );

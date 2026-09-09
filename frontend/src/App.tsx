@@ -60,7 +60,7 @@ function loadSettings(): Settings {
         ) - 100,
       ) < 0.001
     )
-      return s;
+      return { ...defaults, ...s };
   } catch {
     /* Invalid preferences fall back to defaults. */
   }
@@ -426,7 +426,7 @@ export default function App() {
                           report ? `${fmt(report.duplicate_percentage)}%` : "—",
                           report
                             ? `${fmt(report.duplicate_count, 0)} duplicate rows`
-                            : "Exact repeated rows",
+                            : "Exact records · ID-aware",
                         ],
                         [
                           Database,
@@ -571,6 +571,7 @@ export default function App() {
             )}
             {page === "Settings" && (
               <SettingsPage
+                columns={report?.columns.map((column) => column.name) || []}
                 settings={settings}
                 onSave={(s) => {
                   setSettings(s);

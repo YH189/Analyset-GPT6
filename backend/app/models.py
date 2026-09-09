@@ -6,6 +6,10 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class Settings(BaseModel):
+    duplicate_auto_exclude_ids: bool = True
+    duplicate_column_overrides: dict[str, Literal["auto", "include", "exclude"]] = Field(
+        default_factory=dict
+    )
     iqr_multiplier: float = Field(default=1.5, ge=0.5, le=5)
     drift_sensitivity: Literal["sensitive", "standard", "relaxed"] = "standard"
     weights: dict[str, float] = Field(
@@ -51,6 +55,7 @@ class Analysis(BaseModel):
     missing_percentage: float
     duplicate_count: int
     duplicate_percentage: float
+    duplicate_detection: dict[str, Any] = Field(default_factory=dict)
     schema_issues: int
     quality_score: float
     components: dict[str, float]
