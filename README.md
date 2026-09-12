@@ -184,7 +184,7 @@ For example:
 ```text
 customer_id    name    age    plan
 1007           Sam     30     Pro
-1008           Sam     30     Max
+1008           Sam     30     Pro
 ```
 
 These records contain the same business information but different auto-generated IDs.
